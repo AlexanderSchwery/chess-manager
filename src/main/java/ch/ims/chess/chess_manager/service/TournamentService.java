@@ -302,7 +302,7 @@ public class TournamentService {
         }
         Map<Long, Integer> games = new HashMap<>();
         Map<Long, Integer> byes = new HashMap<>();
-        Map<Long, List<Long>> opponents = new HashMap<>();
+        Map<Long, List<GameScore>> played = new HashMap<>();
         for (Match m : matches) {
             if (m.getStatus() != MatchStatus.COMPLETED) continue;
             Long w = m.getWhitePlayer().getId();
@@ -313,22 +313,34 @@ public class TournamentService {
             Long b = m.getBlackPlayer().getId();
             games.merge(w, 1, Integer::sum);
             games.merge(b, 1, Integer::sum);
-            opponents.computeIfAbsent(w, k -> new ArrayList<>()).add(b);
-            opponents.computeIfAbsent(b, k -> new ArrayList<>()).add(w);
+            played.computeIfAbsent(w, k -> new ArrayList<>()).add(new GameScore(b, m.getResult().getWhiteScore()));
+            played.computeIfAbsent(b, k -> new ArrayList<>()).add(new GameScore(w, m.getResult().getBlackScore()));
         }
         Function<Long, Double> totalById = pid ->
                 matchPoints.getOrDefault(pid, 0.0) + adjustments.getOrDefault(pid, 0.0);
         Function<Player, Double> total = p -> totalById.apply(p.getId());
         // Buchholz: sum of the scores of all opponents actually played (byes count nothing)
-        Function<Player, Double> buchholz = p -> opponents.getOrDefault(p.getId(), List.of()).stream()
-                .mapToDouble(totalById::apply).sum();
-        List<Player> players = new ArrayList<>(t.getParticipants());
-        players.sort(Comparator
+        Function<Player, Double> buchholz = p -> played.getOrDefault(p.getId(), List.of()).stream()
+                .mapToDouble(g -> totalById.apply(g.opponentId())).sum();
+        // Sonneborn-Berger: full score of every opponent beaten plus half the score of every opponent drawn
+        Function<Player, Double> sonnebornBerger = p -> played.getOrDefault(p.getId(), List.of()).stream()
+                .mapToDouble(g -> g.score() * totalById.apply(g.opponentId())).sum();
+
+        // In a round robin everybody meets the same opponents, so Buchholz cannot separate tied players;
+        // there Sonneborn-Berger is the first tie-break (FIDE practice), in Swiss it follows Buchholz.
+        Comparator<Player> order = Comparator
                 .comparing((Player p) -> t.getDisqualified().contains(p.getId()))
-                .thenComparing(Comparator.comparing(total).reversed())
-                .thenComparing(Comparator.comparing(buchholz).reversed())
-                .thenComparing(Comparator.comparing(Player::getCurrentElo).reversed())
-                .thenComparing(Player::getName, String.CASE_INSENSITIVE_ORDER));
+                .thenComparing(Comparator.comparing(total).reversed());
+        if (t.getType() == TournamentType.DOUBLE_ROUND_ROBIN) {
+            order = order.thenComparing(Comparator.comparing(sonnebornBerger).reversed());
+        } else {
+            order = order.thenComparing(Comparator.comparing(buchholz).reversed())
+                    .thenComparing(Comparator.comparing(sonnebornBerger).reversed());
+        }
+        order = order.thenComparing(Comparator.comparing(Player::getCurrentElo).reversed())
+                .thenComparing(Player::getName, String.CASE_INSENSITIVE_ORDER);
+        List<Player> players = new ArrayList<>(t.getParticipants());
+        players.sort(order);
         List<StandingEntry> result = new ArrayList<>();
         int rank = 1;
         for (Player p : players) {
@@ -337,10 +349,13 @@ public class TournamentService {
                     adjustments.getOrDefault(p.getId(), 0.0),
                     notes.containsKey(p.getId()) ? String.join(", ", notes.get(p.getId())) : null,
                     byes.getOrDefault(p.getId(), 0), t.getDisqualified().contains(p.getId()),
-                    buchholz.apply(p)));
+                    buchholz.apply(p), sonnebornBerger.apply(p)));
         }
         return result;
     }
+
+    /** One played game from a player's point of view: the opponent and the score the player made (1, 0.5, 0). */
+    private record GameScore(Long opponentId, double score) {}
 
     private Map<Long, Double> totalPoints(Tournament t, List<Match> matches) {
         Map<Long, Double> points = computePoints(matches);

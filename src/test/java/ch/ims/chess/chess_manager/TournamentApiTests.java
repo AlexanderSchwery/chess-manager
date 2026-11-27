@@ -168,4 +168,68 @@ class TournamentApiTests {
         mvc.perform(patch("/api/tournaments/" + t + "/archive")).andExpect(status().isOk());
         mvc.perform(post("/api/tournaments/" + t + "/players/" + p)).andExpect(status().isConflict());
     }
+
+    /**
+     * Double round robin, everybody plays everybody twice with the same result in both legs:
+     * A beats B and C, D beats A and B, B beats C, C beats D.
+     * A and D both have 4 points and the same Buchholz; A has the higher Elo, but D has the higher
+     * Sonneborn-Berger (12 vs 8), so D must win the tournament.
+     */
+    @Test
+    void roundRobinTieIsDecidedBySonnebornBerger() throws Exception {
+        long t = createTournament("DOUBLE_ROUND_ROBIN");
+        String[] names = {"A", "B", "C", "D"};
+        int[] elos = {1800, 1600, 1500, 1400};
+        for (int i = 0; i < names.length; i++) {
+            long p = createPlayer(names[i], elos[i]);
+            mvc.perform(post("/api/tournaments/" + t + "/players/" + p)).andExpect(status().isOk());
+        }
+        mvc.perform(post("/api/tournaments/" + t + "/generate-round-robin")).andExpect(status().isOk());
+
+        java.util.Set<String> winners = java.util.Set.of("A>B", "A>C", "D>A", "D>B", "B>C", "C>D");
+        String body = mvc.perform(get("/api/tournaments/" + t + "/matches"))
+                .andReturn().getResponse().getContentAsString();
+        Matcher m = Pattern.compile("\\{\"id\":(\\d+),[^}]*?\"whitePlayerName\":\"(\\w)\"[^}]*?\"blackPlayerName\":\"(\\w)\"")
+                .matcher(body);
+        int count = 0;
+        while (m.find()) {
+            String white = m.group(2), black = m.group(3);
+            record(Long.parseLong(m.group(1)), winners.contains(white + ">" + black) ? "WHITE_WINS" : "BLACK_WINS");
+            count++;
+        }
+        org.junit.jupiter.api.Assertions.assertEquals(12, count);
+
+        mvc.perform(get("/api/tournaments/" + t + "/standings"))
+                .andExpect(jsonPath("$[0].name").value("D"))
+                .andExpect(jsonPath("$[0].points").value(4.0))
+                .andExpect(jsonPath("$[0].sonnebornBerger").value(12.0))
+                .andExpect(jsonPath("$[1].name").value("A"))
+                .andExpect(jsonPath("$[1].points").value(4.0))
+                .andExpect(jsonPath("$[1].sonnebornBerger").value(8.0));
+    }
+
+    @Test
+    void drawsCountHalfTheOpponentsScoreInSonnebornBerger() throws Exception {
+        long a = createPlayer("Anna", 1500);
+        long b = createPlayer("Ben", 1500);
+        long t = createTournament("FREE_PLAY");
+        mvc.perform(post("/api/tournaments/" + t + "/players/" + a));
+        mvc.perform(post("/api/tournaments/" + t + "/players/" + b));
+        for (int round = 1; round <= 2; round++) {
+            mvc.perform(post("/api/tournaments/" + t + "/matches").contentType(MediaType.APPLICATION_JSON)
+                    .content("{\"roundNumber\":" + round + ",\"whitePlayerId\":" + a + ",\"blackPlayerId\":" + b + "}"))
+                    .andExpect(status().isCreated());
+        }
+        List<Long> open = scheduledMatchIds(t);
+        record(open.get(0), "WHITE_WINS"); // Anna 1, Ben 0
+        record(open.get(1), "DRAW");       // Anna 1.5, Ben 0.5
+
+        // Anna: win vs Ben (0.5) + half of 0.5 = 0.75; Ben: half of Anna's 1.5 = 0.75
+        mvc.perform(get("/api/tournaments/" + t + "/standings"))
+                .andExpect(jsonPath("$[0].name").value("Anna"))
+                .andExpect(jsonPath("$[0].buchholz").value(1.0))
+                .andExpect(jsonPath("$[0].sonnebornBerger").value(0.75))
+                .andExpect(jsonPath("$[1].buchholz").value(3.0))
+                .andExpect(jsonPath("$[1].sonnebornBerger").value(0.75));
+    }
 }

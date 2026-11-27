@@ -48,7 +48,7 @@ und Spring Boot. Es ist ein persönliches Lern- und Hobbyprojekt.
 **Spielbetrieb und Rangliste**
 - Ergebnisse eintragen (1–0, ½–½, 0–1) oder Partien absagen
 - Elo wird sofort nach jedem Ergebnis aktualisiert
-- Rangliste mit Podest, Punkten, Buchholz-Wertung und aktueller Elo
+- Rangliste mit Podest, Punkten, Feinwertungen (Buchholz, Sonneborn-Berger) und aktueller Elo
 
 ---
 
@@ -111,15 +111,28 @@ H2-Konsole: JDBC-URL `jdbc:h2:mem:chessdb`, Benutzer `sa`, Passwort leer.
 - Keine automatischen Paarungen und kein Ende – Partien werden manuell angesetzt.
   Praktisch für Clubabende oder Blitzrunden unter Freunden.
 
-### Rangliste
+### Rangliste und Feinwertungen
 
-Sortierung:
+Bei Punktgleichheit entscheiden Feinwertungen:
 
-1. Disqualifizierte Spieler immer am Ende
-2. Punkte (inkl. Bonus-/Strafpunkte)
-3. **Buchholz** – Summe der Punkte aller gespielten Gegner (Freilose zählen nicht)
-4. Aktuelle Elo
-5. Name
+| Reihenfolge | Schweizer System / Freies Spiel | Doppeltes Rundenturnier |
+|-------------|---------------------------------|-------------------------|
+| 1.          | Punkte (inkl. Bonus/Strafe)     | Punkte (inkl. Bonus/Strafe) |
+| 2.          | Buchholz                        | Sonneborn-Berger        |
+| 3.          | Sonneborn-Berger                | Elo                     |
+| 4.          | Elo                             | Name                    |
+
+Disqualifizierte Spieler stehen immer am Ende.
+
+- **Buchholz** – Summe der Punkte aller Gegner, gegen die man gespielt hat (Freilose zählen nicht).
+  Misst, wie stark die Gegner waren.
+- **Sonneborn-Berger (SB)** – volle Punkte jedes besiegten Gegners plus die halben Punkte jedes
+  Remis-Gegners. Misst, *gegen wen* man gepunktet hat.
+  Beispiel: Sieg gegen einen Spieler mit 4 Punkten und Remis gegen einen mit 3 Punkten → 4 + 1,5 = 5,5.
+
+Warum im Rundenturnier keine Buchholz-Wertung? Dort spielt jeder gegen jeden, punktgleiche Spieler
+haben also genau dieselben Gegner und damit dieselbe Buchholz-Zahl. Deshalb wird dort, wie bei der FIDE
+üblich, direkt Sonneborn-Berger verwendet.
 
 ### Disqualifikation
 
@@ -272,7 +285,7 @@ src/main/resources/
 ```
 
 - `EloAndPairingTests` – Unit-Tests für Elo-Berechnung, Rundenturnier-Generierung und Schweizer Paarung
-- `TournamentApiTests` – Integrationstests über die REST-API (Validierung, Elo-Update, Freilos, Disqualifikation, Archiv)
+- `TournamentApiTests` – Integrationstests über die REST-API (Validierung, Elo-Update, Freilos, Feinwertungen, Disqualifikation, Archiv)
 - `ChessManagerApplicationTests` – prüft, ob der Spring-Kontext startet
 
 Bei jedem Push laufen die Tests automatisch über GitHub Actions (`.github/workflows/ci.yml`).
@@ -295,7 +308,7 @@ Bei jedem Push laufen die Tests automatisch über GitHub Actions (`.github/workf
 ## Ideen für später
 
 - [ ] Persistente Datenbank (H2-Datei oder PostgreSQL) mit Flyway-Migrationen
-- [ ] Weitere Wertungen: Sonneborn-Berger, Buchholz-Cut-1, direkter Vergleich
+- [ ] Weitere Wertungen: Buchholz-Cut-1, direkter Vergleich, Anzahl Siege
 - [ ] Variabler K-Faktor nach FIDE-Regeln
 - [ ] Export der Rangliste als PDF/CSV, Import von Spielern (z. B. SSB-Elo-Liste)
 - [ ] Login mit Rollen (Turnierleiter / Zuschauer)

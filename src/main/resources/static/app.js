@@ -535,7 +535,7 @@ $('#match-form').addEventListener('submit', async (e) => {
 const MEDAL = ['🥇', '🥈', '🥉'];
 
 function formatPoints(p) {
-  return Number.isInteger(p) ? String(p) : p.toFixed(1).replace(/\.0$/, '');
+  return Number.isInteger(p) ? String(p) : p.toFixed(2).replace(/0+$/, '');
 }
 
 async function loadStandings() {
@@ -544,7 +544,7 @@ async function loadStandings() {
   const podium = $('#podium');
   if (!id) {
     podium.innerHTML = '';
-    body.innerHTML = '<tr><td colspan="6" class="text-slate-500 py-4">Kein Turnier gewählt.</td></tr>';
+    body.innerHTML = '<tr><td colspan="7" class="text-slate-500 py-4">Kein Turnier gewählt.</td></tr>';
     return;
   }
   const rows = await run(() => api(`/tournaments/${id}/standings`)) || [];
@@ -576,10 +576,11 @@ async function loadStandings() {
         <td class="text-right tabular-nums">${r.gamesPlayed}</td>
         <td class="text-right tabular-nums font-semibold">${formatPoints(r.points)}${adj}</td>
         <td class="text-right tabular-nums">${formatPoints(r.buchholz)}</td>
+        <td class="text-right tabular-nums">${formatPoints(r.sonnebornBerger)}</td>
         <td class="text-right tabular-nums">${r.elo}</td>
       </tr>`;
     }).join('')
-    : '<tr><td colspan="6" class="text-slate-500 py-4">Keine Teilnehmer.</td></tr>';
+    : '<tr><td colspan="7" class="text-slate-500 py-4">Keine Teilnehmer.</td></tr>';
 }
 
 /* ---------- Player history ---------- */
