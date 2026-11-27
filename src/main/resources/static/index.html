@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Chess Manager</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-100 text-slate-800 min-h-screen">
+
+<header class="bg-slate-900 text-white">
+  <div class="max-w-6xl mx-auto px-4 py-4 flex flex-wrap items-center justify-between gap-3">
+    <h1 class="text-xl font-bold">&#9822; Chess Tournament &amp; Elo Manager</h1>
+    <nav class="flex flex-wrap gap-1" id="tabs">
+      <button class="tab-btn" data-tab="players">Spieler</button>
+      <button class="tab-btn" data-tab="tournaments">Turniere</button>
+      <button class="tab-btn" data-tab="play">Spielbetrieb</button>
+      <button class="tab-btn" data-tab="standings">Rangliste</button>
+    </nav>
+  </div>
+</header>
+
+<main class="max-w-6xl mx-auto px-4 py-6">
+
+  <!-- Tab 1: Spieler -->
+  <section id="tab-players" class="tab-panel space-y-6">
+    <form id="player-form" class="card grid gap-3 sm:grid-cols-4 items-end">
+      <label class="block sm:col-span-2">
+        <span class="lbl">Name</span>
+        <input name="name" required class="inp" placeholder="Magnus Carlsen">
+      </label>
+      <label class="block">
+        <span class="lbl">Start-Elo</span>
+        <input name="currentElo" type="number" min="0" value="1500" required class="inp">
+      </label>
+      <label class="block">
+        <span class="lbl">SSB-Nummer (optional)</span>
+        <input name="ssbNumber" class="inp">
+      </label>
+      <button class="btn-primary sm:col-span-4 sm:w-48">Spieler erfassen</button>
+    </form>
+
+    <div class="card">
+      <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+        <h2 class="h2">Alle Spieler</h2>
+        <input id="player-search" type="search" placeholder="Suchen (Name / SSB)…" class="inp sm:w-64">
+      </div>
+      <div class="overflow-x-auto">
+        <table class="tbl">
+          <thead><tr><th>Name</th><th>SSB-Nr.</th><th class="text-right">Elo</th><th></th></tr></thead>
+          <tbody id="player-rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tab 2: Turniere -->
+  <section id="tab-tournaments" class="tab-panel hidden space-y-6">
+    <form id="tournament-form" class="card grid gap-3 sm:grid-cols-4 items-end">
+      <label class="block sm:col-span-2">
+        <span class="lbl">Turniername</span>
+        <input name="name" required class="inp" placeholder="Clubmeisterschaft 2026">
+      </label>
+      <label class="block">
+        <span class="lbl">Modus</span>
+        <select name="type" class="inp">
+          <option value="SWISS">Schweizer System</option>
+          <option value="DOUBLE_ROUND_ROBIN">Doppelrundenturnier</option>
+          <option value="FREE_PLAY">Freie Paarungen</option>
+        </select>
+      </label>
+      <label class="block">
+        <span class="lbl">Runden (optional, Schweizer)</span>
+        <input name="totalRounds" type="number" min="1" class="inp">
+      </label>
+      <button class="btn-primary sm:col-span-4 sm:w-48">Turnier erstellen</button>
+    </form>
+
+    <div class="grid gap-6 lg:grid-cols-2">
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="h2" id="tournament-list-title">Turniere</h2>
+          <button type="button" id="archive-toggle" class="btn-sm"></button>
+        </div>
+        <div id="tournament-list" class="grid gap-3"></div>
+      </div>
+      <div id="tournament-detail" class="card self-start">
+        <p class="text-slate-500">Turnier auswählen, um Details zu sehen.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tab 3: Spielbetrieb -->
+  <section id="tab-play" class="tab-panel hidden space-y-6">
+    <div class="card grid gap-3 sm:grid-cols-4 items-end">
+      <label class="block">
+        <span class="lbl">Turnier</span>
+        <select id="play-tournament" class="inp"></select>
+      </label>
+      <label class="block">
+        <span class="lbl">Runde</span>
+        <select id="play-round" class="inp"></select>
+      </label>
+      <button id="play-next-round" type="button" class="btn-primary hidden"></button>
+      <div class="text-sm text-slate-500 sm:col-span-4" id="play-info"></div>
+    </div>
+
+    <form id="match-form" class="card grid gap-3 sm:grid-cols-4 items-end">
+      <label class="block">
+        <span class="lbl">Weiss</span>
+        <select name="whitePlayerId" class="inp" required></select>
+      </label>
+      <label class="block">
+        <span class="lbl">Schwarz</span>
+        <select name="blackPlayerId" class="inp" required></select>
+      </label>
+      <label class="block">
+        <span class="lbl">Runde</span>
+        <input name="roundNumber" type="number" min="1" value="1" required class="inp">
+      </label>
+      <button class="btn-secondary">Manuelle Paarung anlegen</button>
+    </form>
+
+    <div id="match-list" class="grid gap-3 md:grid-cols-2"></div>
+  </section>
+
+  <!-- Tab 4: Rangliste -->
+  <section id="tab-standings" class="tab-panel hidden space-y-6">
+    <div class="card">
+      <label class="block sm:w-80 mb-4">
+        <span class="lbl">Turnier</span>
+        <select id="standings-tournament" class="inp"></select>
+      </label>
+      <div id="podium" class="podium"></div>
+      <div class="overflow-x-auto">
+        <table class="tbl">
+          <thead><tr><th>Rang</th><th>Name</th><th class="text-right">Partien</th><th class="text-right">Punkte</th><th class="text-right">Elo</th></tr></thead>
+          <tbody id="standings-rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</main>
+
+<div id="history-modal" class="modal hidden">
+  <div class="modal-box">
+    <div class="flex items-start justify-between gap-3 mb-3">
+      <div>
+        <h2 class="h2">Spielerhistorie</h2>
+        <div class="text-sm text-slate-500" id="history-title"></div>
+      </div>
+      <button type="button" id="history-close" class="btn-sm">Schliessen</button>
+    </div>
+    <div id="history-body"></div>
+  </div>
+</div>
+
+<div id="toast" class="fixed bottom-4 right-4 max-w-sm hidden px-4 py-3 rounded-lg shadow-lg text-white"></div>
+
+<script src="app.js"></script>
+</body>
+</html>

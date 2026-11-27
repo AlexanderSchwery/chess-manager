@@ -1,0 +1,66 @@
+/* Component classes (plain CSS so no Tailwind build step is needed) */
+.card { background: #fff; border-radius: 0.75rem; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+.h2 { font-size: 1.125rem; font-weight: 700; }
+.lbl { display: block; font-size: 0.75rem; font-weight: 600; color: #475569; margin-bottom: 0.25rem; }
+.inp { width: 100%; border: 1px solid #cbd5e1; border-radius: 0.5rem; padding: 0.5rem 0.75rem; background: #fff; }
+.inp:focus { outline: 2px solid #6366f1; outline-offset: 0; border-color: #6366f1; }
+
+.btn-primary, .btn-secondary, .btn-sm {
+  border-radius: 0.5rem; font-weight: 600; cursor: pointer; transition: background .15s;
+}
+.btn-primary { background: #4f46e5; color: #fff; padding: 0.5rem 1rem; }
+.btn-primary:hover { background: #4338ca; }
+.btn-secondary { background: #0f766e; color: #fff; padding: 0.5rem 1rem; }
+.btn-secondary:hover { background: #115e59; }
+.btn-sm { background: #e2e8f0; color: #1e293b; padding: 0.35rem 0.75rem; font-size: 0.875rem; }
+.btn-sm:hover { background: #cbd5e1; }
+.btn-sm.danger { background: #fee2e2; color: #991b1b; }
+.btn-sm.danger:hover { background: #fecaca; }
+.btn-sm.result { background: #eef2ff; color: #3730a3; min-width: 3.5rem; }
+.btn-sm.result:hover { background: #c7d2fe; }
+
+.tab-btn { padding: 0.5rem 1rem; border-radius: 0.5rem; color: #cbd5e1; font-weight: 600; }
+.tab-btn:hover { background: #1e293b; color: #fff; }
+.tab-btn.active { background: #4f46e5; color: #fff; }
+
+.tbl { width: 100%; text-align: left; border-collapse: collapse; }
+.tbl th { font-size: 0.75rem; text-transform: uppercase; color: #64748b; padding: 0.5rem; border-bottom: 2px solid #e2e8f0; }
+.tbl td { padding: 0.5rem; border-bottom: 1px solid #f1f5f9; }
+.tbl tbody tr:hover { background: #f8fafc; }
+
+.badge { display: inline-block; font-size: 0.7rem; font-weight: 700; padding: 0.1rem 0.5rem; border-radius: 9999px; }
+.badge-CREATED, .badge-SCHEDULED { background: #e2e8f0; color: #334155; }
+.badge-IN_PROGRESS { background: #fef3c7; color: #92400e; }
+.badge-COMPLETED { background: #d1fae5; color: #065f46; }
+.badge-CANCELLED { background: #fee2e2; color: #991b1b; }
+
+.t-card { cursor: pointer; border: 2px solid transparent; }
+.t-card:hover, .t-card.selected { border-color: #6366f1; }
+.delta-pos { color: #047857; font-weight: 700; }
+.delta-neg { color: #b91c1c; font-weight: 700; }
+
+.badge-BYE { background: #e0e7ff; color: #3730a3; }
+.bye-card { background: #f8fafc; border: 1px dashed #94a3b8; }
+.row-dq { opacity: .6; text-decoration: line-through; }
+
+/* podium */
+.podium { display: flex; justify-content: center; align-items: flex-end; gap: .75rem; margin-bottom: 1.5rem; }
+.podium-step { flex: 1; max-width: 11rem; text-align: center; }
+.podium-medal { font-size: 2.25rem; line-height: 1; }
+.podium-name { font-weight: 700; margin-top: .25rem; overflow-wrap: anywhere; }
+.podium-pts { font-size: .75rem; color: #64748b; margin-bottom: .4rem; }
+.podium-block { border-radius: .6rem .6rem 0 0; color: #fff; font-weight: 800; font-size: 1.5rem; padding-top: .5rem; }
+.place-1 .podium-block { height: 6.5rem; background: linear-gradient(#fbbf24, #d97706); }
+.place-2 .podium-block { height: 4.75rem; background: linear-gradient(#cbd5e1, #64748b); }
+.place-3 .podium-block { height: 3.5rem; background: linear-gradient(#fdba74, #b45309); }
+.place-1 .podium-name { font-size: 1.15rem; }
+.row-place-1 { background: #fffbeb; }
+.row-place-2 { background: #f8fafc; }
+.row-place-3 { background: #fff7ed; }
+.row-place-1 td, .row-place-2 td, .row-place-3 td { font-size: 1.05rem; }
+
+/* modal */
+.modal { position: fixed; inset: 0; background: rgba(15,23,42,.55); display: flex; align-items: flex-start;
+  justify-content: center; padding: 2rem 1rem; overflow-y: auto; z-index: 50; }
+.modal.hidden { display: none; }
+.modal-box { background: #f1f5f9; border-radius: .75rem; padding: 1rem; width: 100%; max-width: 48rem; }
