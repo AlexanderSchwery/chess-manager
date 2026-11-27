@@ -302,21 +302,31 @@ public class TournamentService {
         }
         Map<Long, Integer> games = new HashMap<>();
         Map<Long, Integer> byes = new HashMap<>();
+        Map<Long, List<Long>> opponents = new HashMap<>();
         for (Match m : matches) {
             if (m.getStatus() != MatchStatus.COMPLETED) continue;
+            Long w = m.getWhitePlayer().getId();
             if (m.isBye()) {
-                byes.merge(m.getWhitePlayer().getId(), 1, Integer::sum);
+                byes.merge(w, 1, Integer::sum);
                 continue;
             }
-            games.merge(m.getWhitePlayer().getId(), 1, Integer::sum);
-            games.merge(m.getBlackPlayer().getId(), 1, Integer::sum);
+            Long b = m.getBlackPlayer().getId();
+            games.merge(w, 1, Integer::sum);
+            games.merge(b, 1, Integer::sum);
+            opponents.computeIfAbsent(w, k -> new ArrayList<>()).add(b);
+            opponents.computeIfAbsent(b, k -> new ArrayList<>()).add(w);
         }
-        Function<Player, Double> total = p ->
-                matchPoints.getOrDefault(p.getId(), 0.0) + adjustments.getOrDefault(p.getId(), 0.0);
+        Function<Long, Double> totalById = pid ->
+                matchPoints.getOrDefault(pid, 0.0) + adjustments.getOrDefault(pid, 0.0);
+        Function<Player, Double> total = p -> totalById.apply(p.getId());
+        // Buchholz: sum of the scores of all opponents actually played (byes count nothing)
+        Function<Player, Double> buchholz = p -> opponents.getOrDefault(p.getId(), List.of()).stream()
+                .mapToDouble(totalById::apply).sum();
         List<Player> players = new ArrayList<>(t.getParticipants());
         players.sort(Comparator
                 .comparing((Player p) -> t.getDisqualified().contains(p.getId()))
                 .thenComparing(Comparator.comparing(total).reversed())
+                .thenComparing(Comparator.comparing(buchholz).reversed())
                 .thenComparing(Comparator.comparing(Player::getCurrentElo).reversed())
                 .thenComparing(Player::getName, String.CASE_INSENSITIVE_ORDER));
         List<StandingEntry> result = new ArrayList<>();
@@ -326,7 +336,8 @@ public class TournamentService {
                     games.getOrDefault(p.getId(), 0), p.getCurrentElo(),
                     adjustments.getOrDefault(p.getId(), 0.0),
                     notes.containsKey(p.getId()) ? String.join(", ", notes.get(p.getId())) : null,
-                    byes.getOrDefault(p.getId(), 0), t.getDisqualified().contains(p.getId())));
+                    byes.getOrDefault(p.getId(), 0), t.getDisqualified().contains(p.getId()),
+                    buchholz.apply(p)));
         }
         return result;
     }

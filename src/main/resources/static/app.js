@@ -575,10 +575,11 @@ async function loadStandings() {
           ${r.byes ? `<span class="badge badge-BYE" title="Spielfrei in ${r.byes} Runde(n)">Spielfrei ×${r.byes}</span>` : ''}</td>
         <td class="text-right tabular-nums">${r.gamesPlayed}</td>
         <td class="text-right tabular-nums font-semibold">${formatPoints(r.points)}${adj}</td>
+        <td class="text-right tabular-nums">${formatPoints(r.buchholz)}</td>
         <td class="text-right tabular-nums">${r.elo}</td>
       </tr>`;
     }).join('')
-    : '<tr><td colspan="5" class="text-slate-500 py-4">Keine Teilnehmer.</td></tr>';
+    : '<tr><td colspan="6" class="text-slate-500 py-4">Keine Teilnehmer.</td></tr>';
 }
 
 /* ---------- Player history ---------- */

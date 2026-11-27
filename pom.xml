@@ -12,20 +12,14 @@
 	<artifactId>chess-manager</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>ChessManager</name>
-	<description/>
-	<url/>
+	<description>Verwaltung von Schachspielern, Turnieren (Schweizer System, doppelter Rundenturnier, freies Spiel) und Elo-Wertungen</description>
+	<url>https://github.com/AlexanderSchwery/chess-manager</url>
 	<licenses>
-		<license/>
+		<license>
+			<name>MIT License</name>
+			<url>https://opensource.org/licenses/MIT</url>
+		</license>
 	</licenses>
-	<developers>
-		<developer/>
-	</developers>
-	<scm>
-		<connection/>
-		<developerConnection/>
-		<tag/>
-		<url/>
-	</scm>
 	<properties>
 		<java.version>21</java.version>
 	</properties>
@@ -78,11 +72,11 @@
 			<artifactId>spring-boot-starter-webmvc-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
-        </dependency>
-    </dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+	</dependencies>
 
 	<build>
 		<plugins>
